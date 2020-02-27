@@ -1,0 +1,19 @@
+#!/usr/sbin/nft -f
+
+
+        chain operator-tc {
+
+{% for svc in loadbalancer %}
+
+        {% if svc.ratelimit != false %}
+
+# service name {{ svc.name }} namespace {{ svc.namespace }}
+
+             ip daddr {{ svc.ipaddr}} {{ svc.protocol }} dport {{ svc.port }} limit rate over {{ svc.ratelimit }} drop
+             
+        {% endif %}
+
+{% endfor %}
+        }
+
+

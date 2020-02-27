@@ -1,0 +1,22 @@
+apiVersion: nft.acnodal.com/v1alpha1
+kind: Nft
+metadata:
+  name: nft
+  annotations:
+    "ansible.operator-sdk/verbosity": "4" 
+spec:
+# NIC used to connect to the public network - this nic firewalled
+  public_nic: enp1s0
+# WARNING disabling drop all will cause all traffic to be passed - Local filters might be a better debug option
+  enable_dropall: false
+# enable SSH access from public network
+  enable_ssh: true
+# enable BGP from public network - use when upstream router is bgp peer
+  enable_bgp: true
+# Note:  Local filters can be added to router in /etc/nftables.d/local.nft
+  
+# enables tc ingress rate shaping where service is annotated with rate  
+  enable_rateshape: true
+
+
+

@@ -1,0 +1,13 @@
+#!/usr/sbin/nft -f
+
+
+        chain operator-cr {
+{% if enable_bgp | bool %}
+            meta iif {{ public_nic }} tcp dport 179 accept
+{% endif %}
+{% if enable_ssh | bool %}
+            meta iif {{ public_nic }} tcp dport 22 accept
+{% endif %}
+
+}
+

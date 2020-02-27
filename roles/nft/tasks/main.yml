@@ -1,0 +1,148 @@
+---
+# tasks file for nft
+
+# Get router IP from metallb configuration
+
+- name: lookup metalb configmap
+  set_fact: 
+    metallb: "{{ lookup('k8s', api_version='v1', kind='ConfigMap',namespace='metallb-system').data.config }}"
+
+
+# create bgppeers bgp variables
+
+- name: write configmap to file
+  copy:
+    content: "{{ metallb }}"
+    dest: metallb.yml
+
+- name: create simple bgp peers yml file
+  script: 
+    cmd: files/mlbcmpeers.py --input metallb.yml --output bgppeers.yml
+  args:
+    executable: python3
+
+- name: load bgppeers
+  include_vars:
+    file: bgppeers.yml
+
+- name: Add router addr to inventory
+  add_host:
+    name: "{{ peeripaddr }}"
+
+
+# setup ssh key in containers for connection to router(s)
+# key stored in k8s secret and projected as file
+
+- name: check for ssh key
+  stat:
+    path: /opt/ansible/.ssh
+  register: ssh_key_dir
+
+
+
+- name: setup ssh key for ansible-operator
+  command:  "{{ item }}"
+  with_items:
+    - mkdir /opt/ansible/.ssh
+    - cp /tmp/key/ansible-operator /opt/ansible/.ssh/id_rsa
+    - chmod 0600 /opt/ansible/.ssh/id_rsa
+  when: ssh_key_dir.stat.exists == false
+  args:
+    warn: false
+
+# setup rateshaping with traffic control ingress 
+
+- name: setup tc ingress
+  block:
+  - name: get tc status
+    command: /sbin/tc qdisc show dev "{{ public_nic }}"
+    delegate_to: "{{peeripaddr }}"
+    register: tc_status
+
+
+  - name:  set tc qdisc ingress
+    command: /sbin/tc qdisc add dev "{{public_nic }}" ingress
+    delegate_to: "{{peeripaddr }}"
+    when: tc_status.stdout.find('ingress') == -1
+    become: yes
+  when: enable_rateshape == true
+
+
+# Create nft configuration
+
+
+- name: create /etc/nftable.d
+  file:
+    path: /etc/nftables.d
+    state: directory
+  delegate_to: "{{ peeripaddr }}"
+  become: yes
+
+
+- name: template the nft main configuration
+  template:
+    src:  nftables.j2
+    dest: /etc/nftables.conf
+  delegate_to: "{{ peeripaddr }}"
+  become: yes
+
+- name: create local-chain.nft
+  template:
+    src: local.j2
+    dest: /etc/nftables.d/local-chain.nft
+    force: no
+  delegate_to: "{{ peeripaddr }}"
+  become: yes
+
+
+- name: template the cr configured variables
+  template:
+    src: operator-cr.j2
+    dest: /etc/nftables.d/operator-cr.nft
+  delegate_to: "{{ peeripaddr }}"
+  become: yes
+
+- name: lookup all services
+  set_fact: 
+    svc: "{{ lookup('k8s', api_version='v1', kind='Service') | to_json }}"
+  
+
+- name: write to file
+  copy:
+    content: "{{ svc }}"
+    dest: svc.json
+
+# The converter takes the full output of a services lookup in JSON
+# extracts the LoadBalancer services and formats to loadable yaml 
+
+- name:  convert svc.json to svc.yml
+  script: 
+    cmd: files/svcs-json-yaml.py --j svc.json --y svc.yml
+  args:
+    executable: python3
+
+- name:  Load the svc vars from svc.yml
+  include_vars: 
+    file: svc.yml
+
+- name: template the nft service configuration
+  template:
+    src: operator-svc.j2
+    dest: /etc/nftables.d/operator-svc.nft
+  delegate_to: "{{ peeripaddr }}"
+  become: yes
+
+- name: template the nft tc configuration
+  template:
+    src: operator-tc.j2
+    dest: /etc/nftables.d/operator-tc.nft
+  when: enable_rateshape == true
+  delegate_to: "{{ peeripaddr }}" 
+  become: yes
+
+# Apply the nft cs_configuration
+
+- name: Apply the NFT configuration
+  command: /usr/sbin/nft -f /etc/nftables.conf
+  delegate_to: "{{ peeripaddr }}"
+  become: yes

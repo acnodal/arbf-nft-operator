@@ -1,0 +1,10 @@
+---
+- version: v1alpha1
+  group: nft.acnodal.com
+  kind: Nft
+  role: /opt/ansible/roles/nft
+  reconcilePeriod: 1m
+
+- version: v1
+  kind: Service
+  role: /opt/ansible/roles/svc

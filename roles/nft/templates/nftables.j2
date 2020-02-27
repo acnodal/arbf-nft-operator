@@ -1,0 +1,71 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+table inet filter {
+        chain global {
+            meta iif lo accept
+            meta iif != {{ public_nic }} ct state new accept
+            ct state established, related accept
+            ct state invalid drop
+            ip protocol icmp accept
+            ip6 nexthdr icmpv6 accept
+            meta iif == enp1s0 tcp sport 53 accept
+            meta iif == enp1s0 udp sport 53 accept
+        }
+
+# local-chain.nft - add local rules not managed by operator here/
+        include "/etc/nftables.d/local-chain.nft"
+
+# these rules are managed by the operator
+        include "/etc/nftables.d/operator-cr.nft"
+        include "/etc/nftables.d/operator-svc.nft"
+        
+        chain input {
+{% if enable_dropall | bool %}
+            type filter hook input priority 0 ; policy drop ;
+{% else %}
+            type filter hook input priority 0 ; policy accept ;
+{% endif %}
+            counter
+            jump local-chain
+            counter
+            jump operator-cr
+            counter
+            jump global
+            counter
+        }
+
+        chain forward {
+{% if enable_dropall | bool %}
+            type filter hook forward priority 0 ; policy drop ;
+{% else %}
+            type filter hook forward priority 0 ; policy accept ;
+{% endif %}
+            counter
+            jump local-chain
+            counter
+            jump operator-svc
+            counter
+            jump global
+            counter
+        }
+
+}
+
+{% if enable_rateshape | bool %}
+table netdev filter {
+
+        include "/etc/nftables.d/operator-tc.nft"
+
+        chain ratelimit {
+            type filter hook ingress device enp1s0 priority 0; policy accept;
+            jump operator-tc
+        }
+}
+
+
+{% endif %}
+
+
+

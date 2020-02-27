@@ -1,0 +1,16 @@
+#!/usr/sbin/nft -f
+
+
+        chain operator-svc {
+            counter
+{% for svc in loadbalancer %}
+# service name {{ svc.name }} namespace {{ svc.namespace }}
+
+                meta iif {{ public_nic }} ip daddr {{ svc.ipaddr}} {{ svc.protocol }} dport {{ svc.port }} accept
+
+{% endfor %}
+            }
+
+
+
+
