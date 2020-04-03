@@ -159,7 +159,7 @@ spec:
           - /usr/local/bin/ao-logs
           - /tmp/ansible-operator/runner
           - stdout
-          image: "acnodal/nft-operator:v0.0.1"
+          image: "acnodal/nft-operator:v0.0.2"
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
@@ -169,7 +169,7 @@ spec:
             mountPath: /tmp/key
             readOnly: true
         - name: operator
-          image: "acnodal/nft-operator:v0.0.1"
+          image: "acnodal/nft-operator:v0.0.2"
           imagePullPolicy: "Always"
           volumeMounts:
           - mountPath: /tmp/ansible-operator/runner
