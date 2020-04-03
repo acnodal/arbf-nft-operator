@@ -129,7 +129,7 @@ This will deploy the nft-operator in your cluster in the arbf-operators namespac
  - The nft-operator
 
 
-3. Configure the Operator
+4. Configure the Operator
 
 The operator is configured using custom resource
 
@@ -156,7 +156,7 @@ chain local-chain {
         }
 ```
 
-4. Using the Operator
+5. Using the Operator
 
 Once configured the operator reads k8s services to create rulesets.  The operator is watching for Service events and creates/updates the rules as new services are created.  The operator also reconciles every 60 seconds (by default) updated all rules at that time.  One of the benefits of NFT is that a complete ruleset can be swapped in a single operation avoiding an inconsistent state. 
 
@@ -188,7 +188,7 @@ The further information on the limitcommands is [here][limit]
 > Note well.  NFT syntax is very specific, therefore if the incorrect syntax is used for ratelimit, nft will not update the tables.  This will not create a security problem as the previous tables will remain in place however services will not be updated.   A future enhancement may check ratelimit syntax.
 
 
-5. Troubleshooting
+6. Troubleshooting
 
 Troubleshooting consists of checking the operator and the linux router.
 
