@@ -17,6 +17,7 @@ spec:
   
 # enables tc ingress rate shaping where service is annotated with rate  
   enable_rateshape: true
+  metallb-namespace: metallb-system
 
 
 

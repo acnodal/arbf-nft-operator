@@ -19,26 +19,29 @@ try:
         for i, item in enumerate(data):
 
             if (data[i]["spec"]["type"]) == "LoadBalancer":
-                if 'ratelimit' in data[i]["metadata"]["annotations"]:
-                    ratelimit = data[i]["metadata"]["annotations"]["ratelimit"]
+
+                if 'annotations' in data[i]["metadata"]:
+
+                    if 'ratelimit' in data[i]["metadata"]["annotations"]:
+                        ratelimit = data[i]["metadata"]["annotations"]["ratelimit"]
+                
                 else:
                     ratelimit = False
-
-    
-                for p in data[i]["spec"]["ports"]:
-                    pass
-
 
                 for q in data[i]["status"]["loadBalancer"]["ingress"]:
                     pass
 
-                lbsvcs.append({'name' : data[i]["metadata"]["name"],
-                            'namespace' : data[i]["metadata"]["namespace"],
-                            'protocol' : p["protocol"].lower(),
-                            'port' : p["port"],
-                            'ipaddr' : q["ip"],
-                            'ratelimit': ratelimit
-                             })  
+                for p in data[i]["spec"]["ports"]:
+                    pass
+
+
+                    lbsvcs.append({'name' : data[i]["metadata"]["name"],
+                                'namespace' : data[i]["metadata"]["namespace"],
+                                'protocol' : p["protocol"].lower(),
+                                'port' : p["port"],
+                                'ipaddr' : q["ip"],
+                                'ratelimit': ratelimit
+                                 })  
 
 
     f.close()
