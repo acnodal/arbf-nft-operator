@@ -24,6 +24,8 @@ try:
 
                     if 'ratelimit' in data[i]["metadata"]["annotations"]:
                         ratelimit = data[i]["metadata"]["annotations"]["ratelimit"]
+                    else:
+                        ratelimit = False
                 
                 else:
                     ratelimit = False

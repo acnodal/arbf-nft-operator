@@ -3,7 +3,7 @@ kind: Nft
 metadata:
   name: nft
   annotations:
-    "ansible.operator-sdk/verbosity": "4" 
+#    "ansible.operator-sdk/verbosity": "4" 
 spec:
 # NIC used to connect to the public network - this nic firewalled
   public_nic: enp1s0
